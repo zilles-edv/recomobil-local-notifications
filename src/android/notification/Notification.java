@@ -28,11 +28,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.service.notification.StatusBarNotification;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.util.ArraySet;
-import android.support.v4.util.Pair;
+import android.util.Pair;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -44,15 +43,23 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import androidx.collection.ArraySet;
+import androidx.core.app.NotificationCompat;
 
 import static android.app.AlarmManager.RTC;
 import static android.app.AlarmManager.RTC_WAKEUP;
-import static android.app.PendingIntent.FLAG_CANCEL_CURRENT;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
-import static android.support.v4.app.NotificationCompat.PRIORITY_HIGH;
-import static android.support.v4.app.NotificationCompat.PRIORITY_MAX;
-import static android.support.v4.app.NotificationCompat.PRIORITY_MIN;
+import static androidx.core.app.NotificationCompat.PRIORITY_HIGH;
+import static androidx.core.app.NotificationCompat.PRIORITY_MAX;
+import static androidx.core.app.NotificationCompat.PRIORITY_MIN;
+import static java.lang.Thread.sleep;
 
 /**
  * Wrapper class around OS notification class. Handles basic operations
@@ -217,8 +224,14 @@ public final class Notification {
             if (!date.after(new Date()) && trigger(intent, receiver))
                 continue;
 
+            int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+            if (android.os.Build.VERSION.SDK_INT <= 30) {
+              // null
+            }else{
+              flags = 33554432 | PendingIntent.FLAG_UPDATE_CURRENT;
+            }
             PendingIntent pi = PendingIntent.getBroadcast(
-                    context, 0, intent, FLAG_CANCEL_CURRENT);
+                    context, 0, intent, flags);
 
             try {
                 switch (options.getPrio()) {
@@ -227,9 +240,10 @@ public final class Notification {
                         break;
                     case PRIORITY_MAX:
                         if (SDK_INT >= M) {
-                            mgr.setExactAndAllowWhileIdle(RTC_WAKEUP, time, pi);
+                            AlarmManager.AlarmClockInfo info = new AlarmManager.AlarmClockInfo(time, pi);
+                            mgr.setAlarmClock(info, pi);
                         } else {
-                            mgr.setExact(RTC, time, pi);
+                            mgr.setExact(RTC_WAKEUP, time, pi);
                         }
                         break;
                     default:
@@ -304,8 +318,15 @@ public final class Notification {
         for (String action : actions) {
             Intent intent = new Intent(action);
 
+          int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+          if (android.os.Build.VERSION.SDK_INT <= 30) {
+            // null
+          }else{
+            flags = 33554432 | PendingIntent.FLAG_UPDATE_CURRENT;
+          }
+
             PendingIntent pi = PendingIntent.getBroadcast(
-                    context, 0, intent, 0);
+                    context, 0, intent, flags);
 
             if (pi != null) {
                 getAlarmMgr().cancel(pi);
@@ -324,6 +345,8 @@ public final class Notification {
         }
 
         grantPermissionToPlaySoundFromExternal();
+        new NotificationVolumeManager(context, options)
+            .adjustAlarmVolume();
         getNotMgr().notify(getId(), builder.build());
     }
 

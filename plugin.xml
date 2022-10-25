@@ -23,20 +23,20 @@
 
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         xmlns:android="http://schemas.android.com/apk/res/android"
-        id="cordova-plugin-local-notification"
-        version="0.9.0-beta.3">
+        id="recomobil-local-notifications"
+        version="1.0">
 
     <name>LocalNotification</name>
 
     <description>Schedules and queries for local notifications</description>
 
-    <repo>https://github.com/katzer/cordova-plugin-local-notifications.git</repo>
+    <repo>https://github.com/zilles-edv/recomobil-local-notifications.git</repo>
 
     <keywords>appplant, notification, local notification, user notification</keywords>
 
     <license>Apache 2.0</license>
 
-    <author>Sebastián Katzer</author>
+    <author>Jonas Zilles</author>
 
     <!-- cordova -->
     <engines>
@@ -93,6 +93,10 @@
         <preference name="ANDROID_SUPPORT_V4_VERSION" default="26.+" />
         <framework src="com.android.support:support-v4:$ANDROID_SUPPORT_V4_VERSION" />
         <framework src="src/android/build/localnotification.gradle" custom="true" type="gradleReference"/>
+         <!-- android x -->
+        <preference name="ANDROIDX_VERSION" default="1.2.0" />
+        <preference name="ANDROIDX_APPCOMPAT_VERSION" default="1.3.1" />
+        <framework src="androidx.appcompat:appcompat:$ANDROIDX_APPCOMPAT_VERSION" />
 
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="LocalNotification">
@@ -100,7 +104,7 @@
             </feature>
         </config-file>
 
-        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+        <config-file target="AndroidManifest.xml" parent="application">
             <provider
                 android:name="de.appplant.cordova.plugin.notification.util.AssetProvider"
                 android:authorities="${applicationId}.localnotifications.provider"
@@ -134,9 +138,12 @@
             </receiver>
         </config-file>
 
-        <config-file target="AndroidManifest.xml" parent="/manifest">
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
             <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
             <uses-permission android:name="android.permission.WAKE_LOCK" />
+            <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+            <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
         </config-file>
 
         <source-file
@@ -184,6 +191,10 @@
             target-dir="src/de/appplant/cordova/plugin/notification/receiver" />
 
         <source-file
+            src="src/android/notification/receiver/AbstractNotificationReceiver.java"
+            target-dir="src/de/appplant/cordova/plugin/notification/receiver" />
+            
+        <source-file
             src="src/android/notification/receiver/AbstractTriggerReceiver.java"
             target-dir="src/de/appplant/cordova/plugin/notification/receiver" />
 
@@ -208,6 +219,10 @@
             target-dir="src/de/appplant/cordova/plugin/notification/util" />
 
         <source-file
+            src="src/android/notification/util/LaunchUtils.java"
+            target-dir="src/de/appplant/cordova/plugin/notification/util" />
+
+        <source-file
             src="src/android/notification/Builder.java"
             target-dir="src/de/appplant/cordova/plugin/notification" />
 
@@ -217,6 +232,10 @@
 
         <source-file
             src="src/android/notification/Notification.java"
+            target-dir="src/de/appplant/cordova/plugin/notification" />
+
+        <source-file
+            src="src/android/notification/NotificationVolumeManager.java"
             target-dir="src/de/appplant/cordova/plugin/notification" />
 
         <source-file
