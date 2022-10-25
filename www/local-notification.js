@@ -651,7 +651,7 @@ exports._mergeWithDefaults = function (options) {
 
     options.meta = {
         plugin:  'recomobil-local-notifications',
-        version: '0.9-beta.5'
+        version: '1.0'
     };
 
     return options;
